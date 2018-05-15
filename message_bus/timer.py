@@ -39,16 +39,36 @@ class Timer(object):
         self._fn = func
         self._tm = tm
         self._args = args
-        self._kwargs = kwargs
+        self._kwargs = kwargs     
+        print("Timer {0} is running...".format(self.ID))          
+        # self._timer = threading.Timer(self._tm, self._do_func, self._args, self._kwargs) 
         self._do_start()
-        print("Timer {0} is running...".format(self.ID))
+        
 
     def _do_start(self):
         """
         启动定时器线程            
         """   
-        self._timer = threading.Timer(self._tm, self._do_func, self._args, self._kwargs)
-        self._timer.start()
+        if self._timer == None:
+            self._timer = threading.Timer(self._tm, self._do_func, self._args, self._kwargs) 
+            # self._timer.
+            self._timer.daemon = True
+            self._timer.start()        
+            
+            self._timer.join()
+
+        # print("Thread {} done.".format(threading.enumerate()[1:]))
+        # for i in threading.enumerate()[1:]:
+        #     self._timer.cancel()
+        # print("Thread {} done.".format(threading.enumerate()[1:]))
+        # [(lambda t: t.cancel())(timer) for timer in threading.enumerate() if type(timer)==threading._Timer]
+        # timer = threading.Timer(self._tm, self._do_func, self._args, self._kwargs) 
+        # timer.start()
+        # timer.join()        
+        self._timer = threading.Timer(self._tm, self._do_func, self._args, self._kwargs) 
+        self._timer.start()      
+        # self._timer.daemon = True  
+        self._timer.join()
 
     def _do_func(self,args=[],kwargs={}):
         """
@@ -60,12 +80,12 @@ class Timer(object):
             if self.max_times == 0:                
                 print("\nTimer {0} has running {1} times".format(self.ID,self.times+1))
                 self.times = self.times+1
-                self._fn(args,kwargs)            
+                self._fn(args,kwargs) 
                 self._do_start()
             elif self.times<self.max_times:                
                 print("\nTimer {0} has running {1} times".format(self.ID,self.times+1))
                 self.times = self.times+1
-                self._fn(args,kwargs)            
+                self._fn(args,kwargs)                              
                 self._do_start()                    
             else:
                 self.stop()
@@ -84,25 +104,13 @@ def counter(identity, limit):
     import datetime
     for n in range(limit):
         # stderr无缓存，避免线程间交叉输出
-        sys.stderr.write('datetime = {}， id = {}, cnt = {}\n'.format(datetime.datetime.now(),identity, n))           
+        sys.stderr.write('datetime = {}， id = {}, cnt = {}\n'.format(datetime.datetime.now(),identity, n))       
 
-def monitor(timer,times):   
-    print(times) 
-    while True:        
-        if timer.times>=times:
-            timer.stop()
-            break
-        else:
-            import time
-            time.sleep(0.001)    
+ 
 
 def main():
-    mt = Timer(id=1)
-    mt.start(0.01, counter,[1,4])    
-    
-    # 定时器控制线程
-    t = threading.Thread(group=None,target=monitor,args=[mt,10])
-    t.start()
+    mt = Timer(id=1,max_times=100)
+    mt.start(1, counter,[1,4])    
 
 if __name__ == '__main__':
     main()

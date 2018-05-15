@@ -49,6 +49,7 @@ class Timer(object):
         """   
         self._timer = threading.Timer(self._tm, self._do_func, self._args, self._kwargs)
         self._timer.start()
+        self._timer.join()
 
     def _do_func(self,args=[],kwargs={}):
         """

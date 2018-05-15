@@ -56,6 +56,7 @@ class MsgCenter(object):
     def Start(self):
         self.__active = True
         self.__thread.start()
+        
     
     def Stop(self):
         self.__active = False
@@ -106,23 +107,11 @@ class Subscriber(object):
     def process(self, msg):
         print("{} got subject {}, got message{}".format(self.name, msg.subject, msg.dict))        
 
-
-
-def monitor(timer,times):   
-    print(times) 
-    while True:        
-        if timer.times>=times:
-            timer.stop()
-            break
-        else:
-            import time
-            time.sleep(0.001)   
-
-
 mc = MsgCenter()
 pp = Publisher(mc)
 msg = Message('music')
 msg.dict['name'] = "hello world"
+
 def notify(args=[],kwargs={}):
     pp.publish(msg)
 
@@ -138,15 +127,21 @@ def main():
 
 
     from timer import Timer
-    import threading
     
-    mt = Timer(id=1)
-    mt.start(2, notify)    
     
-    # 定时器控制线程
-    t = threading.Thread(group=None,target=monitor,args=[mt,10])
-    t.start()
-    t.join()
+    mt = Timer(id=1,max_times=10)
+    mt.start(0.01, notify)    
+
+    mt1 = Timer(id=2)
+    mt1.start(5,(lambda mc: mc.Stop())(mc))
+    
+    # # 定时器控制线程
+    # t = threading.Thread(group=None,target=monitor,args=[mt,10])
+    # t.start()
+    # t.join()
+    # import time
+
+    # time.sleep(50)
 
 if __name__ == '__main__':
     main()
