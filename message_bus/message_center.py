@@ -25,7 +25,7 @@ class MsgCenter(object):
         self.__thread = Thread(target=self.__run)
 
 
-    def subscribe(self,msg.subject,subscriber):
+    def subscribe(self,subject,subscriber):
         """
         docstring here        
             :param msg: 消息主题
@@ -53,11 +53,11 @@ class MsgCenter(object):
         except:
             pass
         
-    def start(self):
+    def Start(self):
         self.__active = True
         self.__thread.start()
     
-    def stop(self):
+    def Stop(self):
         self.__active = False
         self.__thread.join()
 
@@ -76,7 +76,77 @@ class MsgCenter(object):
             for subscriber in self.__subscribers[msg.subject]:
                 subscriber.process(msg)
 
-    def send(self,msg):
+    def Send(self,msg):
         if self.__msg_queue.full():
             self.__msg_queue.get()
         self.__msg_queue.put(msg)
+
+
+class Publisher(object):
+
+    def __init__(self, msg_center):
+        self.__msg_center = msg_center
+
+    def publish(self, msg):
+        print("Publisher send message: {1} of subject {0}".format(msg.subject, msg.dict))
+        self.__msg_center.Send(msg)
+
+class Subscriber(object):
+
+    def __init__(self, name, msg_center):
+        self.name = name
+        self.__msg_center = msg_center
+
+    def subscribe(self, subject):
+        self.__msg_center.subscribe(subject, self)
+
+    def unsubscribe(self, subject):
+        self.__msg_center.unsubscribe(subject, self)
+    
+    def process(self, msg):
+        print("{} got subject {}, got message{}".format(self.name, msg.subject, msg.dict))        
+
+
+
+def monitor(timer,times):   
+    print(times) 
+    while True:        
+        if timer.times>=times:
+            timer.stop()
+            break
+        else:
+            import time
+            time.sleep(0.001)   
+
+
+mc = MsgCenter()
+pp = Publisher(mc)
+msg = Message('music')
+msg.dict['name'] = "hello world"
+def notify(args=[],kwargs={}):
+    pp.publish(msg)
+
+def main():
+    
+    mc.Start()
+
+    
+    jim = Subscriber('Jim',mc)
+    jim.subscribe("music")
+    jack = Subscriber('Jack',mc)
+    jack.subscribe("music")    
+
+
+    from timer import Timer
+    import threading
+    
+    mt = Timer(id=1)
+    mt.start(2, notify)    
+    
+    # 定时器控制线程
+    t = threading.Thread(group=None,target=monitor,args=[mt,10])
+    t.start()
+    t.join()
+
+if __name__ == '__main__':
+    main()
